@@ -18,7 +18,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-800 text-white grid lg:grid-cols-2">
+    <div className="h-screen grid lg:grid-cols-2">
       {/* Left Side - Form */}
       <div className="flex flex-col justify-center items-center p-6 sm:p-12">
         <div className="w-full max-w-md space-y-8">
@@ -38,11 +38,11 @@ const LoginPage = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="form-control ">
+            <div className="form-control">
               <label className="label">
-                <span className="label-text text-white font-medium">Email</span>
+                <span className="label-text font-medium">Email</span>
               </label>
-              <div className="relative w-full border border-gray-300 rounded-lg p-2 ">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-base-content/40" />
                 </div>
@@ -60,7 +60,7 @@ const LoginPage = () => {
               <label className="label">
                 <span className="label-text font-medium">Password</span>
               </label>
-              <div className="relative border border-gray-300 rounded-lg p-2 shadow-sm">
+              <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-base-content/40" />
                 </div>
@@ -85,10 +85,10 @@ const LoginPage = () => {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary bg-gray-400/60 w-full rounded-lg p-2 shadow-sm" disabled={isLoggingIn}>
+            <button type="submit" className="btn btn-primary w-full" disabled={isLoggingIn}>
               {isLoggingIn ? (
                 <>
-                  <Loader2 className="h-5 w-5 animate-spin " />
+                  <Loader2 className="h-5 w-5 animate-spin" />
                   Loading...
                 </>
               ) : (
@@ -100,7 +100,7 @@ const LoginPage = () => {
           <div className="text-center">
             <p className="text-base-content/60">
               Don&apos;t have an account?{" "}
-              <Link to="/signup" className="link link-primary underline ">
+              <Link to="/signup" className="link link-primary">
                 Create account
               </Link>
             </p>
