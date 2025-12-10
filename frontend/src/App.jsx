@@ -1,3 +1,5 @@
+// npm run dev to start frontend
+
 import Navbar from "./components/Navbar";
 
 import HomePage from "./pages/HomePage";
