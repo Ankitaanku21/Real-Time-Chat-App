@@ -91,10 +91,24 @@ export const updateProfile = async (req, res) => {
     const userId = req.user._id;
 
     if (!profilePic) {
-      return res.status(400).json({ message: "Profile pic is required" });
+      return res.status(400).json({
+        message: "Profile picture is required",
+      });
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    // size check (for base64)
+    const sizeMB = getBase64Size(profilePic);
+    if (sizeMB > 10) {
+      return res.status(400).json({
+        message: "Image size must be less than 10MB",
+      });
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+      folder: "profile_pics",
+      resource_type: "image",
+    });
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },
@@ -102,11 +116,23 @@ export const updateProfile = async (req, res) => {
     );
 
     res.status(200).json(updatedUser);
+
   } catch (error) {
-    console.log("error in update profile:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Error in update profile:", error);
+
+    // Cloudinary specific error
+    if (error.message?.includes("File size too large")) {
+      return res.status(400).json({
+        message: "Uploaded image is too large",
+      });
+    }
+
+    res.status(500).json({
+      message: "Failed to upload profile picture",
+    });
   }
 };
+
 
 export const checkAuth = (req, res) => {
   try {
