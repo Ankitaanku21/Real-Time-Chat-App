@@ -2,6 +2,56 @@ import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudinary.js";
+import { OAuth2Client } from "google-auth-library";
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      return res.status(400).json({ message: "Google token required" });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { name, email, picture } = payload;
+
+    let user = await User.findOne({ email });
+
+    // Create new user if not exists
+    if (!user) {
+      user = new User({
+        fullName: name,
+        email,
+        profilePic: picture,
+        password: "GOOGLE_AUTH",
+      });
+
+      await user.save();
+    }
+
+    // Generate JWT cookie
+    generateToken(user._id, res);
+
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+    });
+
+  } catch (error) {
+    console.log("Google auth error:", error);
+    res.status(500).json({ message: "Google authentication failed" });
+  }
+};
+
 
 export const signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -85,51 +135,84 @@ export const logout = (req, res) => {
   }
 };
 
+// export const updateProfile = async (req, res) => {
+//   try {
+//     const { profilePic } = req.body;
+//     const userId = req.user._id;
+
+//     if (!profilePic) {
+//       return res.status(400).json({
+//         message: "Profile picture is required",
+//       });
+//     }
+
+//     // size check (for base64)
+//     const sizeMB = getBase64Size(profilePic);
+//     if (sizeMB > 20) {
+//       return res.status(400).json({
+//         message: "Image size must be less than 10MB",
+//       });
+//     }
+
+//     const uploadResponse = await cloudinary.uploader.upload(profilePic, {
+//       folder: "profile_pics",
+//       resource_type: "image",
+//     });
+
+//     const updatedUser = await User.findByIdAndUpdate(
+//       userId,
+//       { profilePic: uploadResponse.secure_url },
+//       { new: true }
+//     );
+
+//     res.status(200).json(updatedUser);
+
+//   } catch (error) {
+//     console.error("Error in update profile:", error);
+
+//     // Cloudinary specific error
+//     if (error.message?.includes("File size too large")) {
+//       return res.status(400).json({
+//         message: "Uploaded image is too large",
+//       });
+//     }
+
+//     res.status(500).json({
+//       message: "Failed to upload profile picture",
+//     });
+//   }
+// };
+
+
 export const updateProfile = async (req, res) => {
   try {
     const { profilePic } = req.body;
-    const userId = req.user._id;
 
     if (!profilePic) {
-      return res.status(400).json({
-        message: "Profile picture is required",
-      });
-    }
-
-    // size check (for base64)
-    const sizeMB = getBase64Size(profilePic);
-    if (sizeMB > 10) {
-      return res.status(400).json({
-        message: "Image size must be less than 10MB",
-      });
+      return res.status(400).json({ message: "Profile picture required" });
     }
 
     const uploadResponse = await cloudinary.uploader.upload(profilePic, {
       folder: "profile_pics",
-      resource_type: "image",
     });
 
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
       { profilePic: uploadResponse.secure_url },
       { new: true }
     );
 
-    res.status(200).json(updatedUser);
+    res.status(200).json({
+      _id: user._id,
+      fullName: user.fullName,
+      email: user.email,
+      profilePic: user.profilePic,
+      createdAt: user.createdAt,
+    });
 
   } catch (error) {
-    console.error("Error in update profile:", error);
-
-    // Cloudinary specific error
-    if (error.message?.includes("File size too large")) {
-      return res.status(400).json({
-        message: "Uploaded image is too large",
-      });
-    }
-
-    res.status(500).json({
-      message: "Failed to upload profile picture",
-    });
+    console.error("updateProfile error:", error);
+    res.status(500).json({ message: "Profile update failed" });
   }
 };
 
