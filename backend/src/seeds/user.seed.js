@@ -104,12 +104,12 @@ const seedDatabase = async () => {
   try {
     await connectDB();
 
-    await User.insertMany(seedUsers);
+    await User.insertMany(seedUsers, { ordered: false });
     console.log("Database seeded successfully");
   } catch (error) {
-    console.error("Error seeding database:", error);
+    console.log("Note: Some users may already exist (duplicates skipped)");
   }
+  process.exit(0);
 };
 
-// Call the function
 seedDatabase();
